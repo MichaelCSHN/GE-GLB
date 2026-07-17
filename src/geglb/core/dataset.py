@@ -10,6 +10,7 @@ from .config import ProjectConfig
 from .coordinates import LocalFrame
 
 DATASET_SCHEMA = "ge-glb.dataset/v1"
+DATASET_V2_SCHEMA = "ge-glb.capture-dataset/v2"
 
 
 def write_json(path: Path, value: object) -> None:
