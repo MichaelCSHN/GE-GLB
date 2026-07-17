@@ -33,7 +33,19 @@ never be filled with invented imagery.
 4. Add GE 3D capture planning without changing the processor.
 5. Add exposure/seam optimization and reserve the synchronized real-mast importer.
 
+## Implementation status
+
+- [x] CaptureBand, Roof360Spec, and band validation (specification.py).
+- [x] Neutral capture plan generator (capture_plan.py).
+  - ``build_capture_model()`` produces backend-agnostic ``CaptureModel`` per band × azimuth × pose.
+  - ``default_spec()`` provides the reference 4+4 dual-band fixture.
+  - ``validate_band_overlap()`` checks horizontal FOV coverage between adjacent azimuths.
+- [ ] Blender panorama baseline and product writer.
+- [ ] GE 3D capture planning.
+- [ ] Exposure/seam optimization.
+
 ## Current verification boundary
 
-This repository can validate band specifications and product contracts. It cannot yet verify a
-rendered panorama, Earth Pro image acquisition, or real multi-camera synchronization.
+This repository can validate band specifications, product contracts, and the neutral capture plan
+generator. It cannot yet verify a rendered panorama, Earth Pro image acquisition, or real
+multi-camera synchronization.
