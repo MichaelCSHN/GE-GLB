@@ -1,0 +1,12 @@
+[project]
+name = "lookat-demo"
+
+[spec]
+radius_m = 250.0
+azimuth_deg = [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
+elevation_deg = [30.0, 60.0, 90.0]
+
+[capture]
+image_width = 1920
+image_height = 1080
+horizontal_fov_deg = 90.0

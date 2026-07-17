@@ -80,6 +80,46 @@ def _parser() -> argparse.ArgumentParser:
     p_underbody.add_argument("--out", required=True)
     p_underbody.add_argument("--meters-per-pixel", type=float, default=0.1)
 
+    p_panorama = product_commands.add_parser(
+        "panorama", help="Produce Panorama360Product from a captured dataset"
+    )
+    p_panorama.add_argument("--dataset", required=True)
+    p_panorama.add_argument("--out", required=True)
+    p_panorama.add_argument("--width", type=int, default=640)
+
+    p_lookat = product_commands.add_parser(
+        "lookat", help="Produce LookAtViewSetProduct from a captured dataset"
+    )
+    p_lookat.add_argument("--dataset", required=True)
+    p_lookat.add_argument("--out", required=True)
+
+    # blender plan-v2
+    blender_v2 = blender_commands.add_parser("plan-v2", help="Prepare a v2 Blender render job")
+    _capture_arguments(blender_v2)
+    blender_v2.add_argument("--scene", required=True, help="Input .glb/.gltf scene")
+
+    # run
+    run_cmd = commands.add_parser("run", help="Run an end-to-end task pipeline")
+    run_sub = run_cmd.add_subparsers(dest="run_task", required=True)
+    for rtask, rhelp in [
+        ("underbody", "Task 01 — underbody image"),
+        ("panorama", "Task 02 — roof 360 panorama"),
+        ("lookat", "Task 03 — drone LookAt view set"),
+    ]:
+        rp = run_sub.add_parser(rtask, help=rhelp)
+        rp.add_argument("--config", help="TOML project configuration (underbody only)")
+        rp.add_argument("--route", help="KML route file (underbody only)")
+        rp.add_argument("--scene", help="Input .glb/.gltf scene")
+        rp.add_argument("--spec", help="TOML spec file (panorama and lookat only)")
+        rp.add_argument("--out", required=True, help="Output directory")
+        rp.add_argument("--blender-exec", help="Path to Blender executable")
+        rp.add_argument("--resume", action="store_true", help="Resume from previous run")
+        rp.add_argument(
+            "--existing",
+            action="store_true",
+            help="Skip plan step, use existing dataset",
+        )
+
     validate_product_p = commands.add_parser(
         "validate-product", help="Validate a product directory"
     )
@@ -91,14 +131,10 @@ def _parser() -> argparse.ArgumentParser:
         choices=["underbody", "panorama", "lookat"],
     )
 
-    serve_cmd = commands.add_parser(
-        "serve", help="Start the GE-GLB web dashboard"
-    )
+    serve_cmd = commands.add_parser("serve", help="Start the GE-GLB web dashboard")
     serve_cmd.add_argument("--port", type=int, default=8080)
     serve_cmd.add_argument("--host", default="127.0.0.1")
-    serve_cmd.add_argument(
-        "--dir", default="build", help="Root directory to scan for builds"
-    )
+    serve_cmd.add_argument("--dir", default="build", help="Root directory to scan for builds")
     return parser
 
 
@@ -118,17 +154,31 @@ def main(argv: list[str] | None = None) -> int:
         _print(build_plan(load_config(args.config), args.route, args.out))
         return 0
     if args.command == "blender":
-        _print(
-            build_blender_plan(
-                load_config(args.config),
-                args.route,
-                args.scene,
-                args.out,
-                render_engine=args.engine,
-                samples=args.samples,
-                transparent_background=args.transparent_background,
+        if getattr(args, "backend_command", None) == "plan-v2":
+            from ..tasks.underbody_image.workflows.blender_v2 import (
+                build_blender_plan_v2,
             )
-        )
+
+            _print(
+                build_blender_plan_v2(
+                    load_config(args.config),
+                    args.route,
+                    args.scene,
+                    args.out,
+                ).as_dict()
+            )
+        else:
+            _print(
+                build_blender_plan(
+                    load_config(args.config),
+                    args.route,
+                    args.scene,
+                    args.out,
+                    render_engine=args.engine,
+                    samples=args.samples,
+                    transparent_background=args.transparent_background,
+                )
+            )
         return 0
     if args.command == "validate":
         result = validate_dataset(args.dataset, require_images=args.require_images)
@@ -167,6 +217,14 @@ def main(argv: list[str] | None = None) -> int:
                     meters_per_pixel=args.meters_per_pixel,
                 )
             )
+        elif args.product_command == "panorama":
+            from ..tasks.roof_360_pano.compositor import build_panorama
+
+            _print(build_panorama(args.dataset, args.out, panorama_width=args.width))
+        elif args.product_command == "lookat":
+            from ..tasks.drone_lookat_set.product_writer import write_viewset_product
+
+            _print(write_viewset_product(args.dataset, args.out))
         return 0
     if args.command == "validate-product":
         from ..products.validate import validate_product
@@ -179,4 +237,43 @@ def main(argv: list[str] | None = None) -> int:
 
         run_server(host=args.host, port=args.port, scan_dir=args.dir)
         return 0
+    if args.command == "run":
+        from ..workflows.runner import run_task
+
+        task_map = {
+            "underbody": "task01_underbody",
+            "panorama": "task02_roof_360",
+            "lookat": "task03_drone_lookat",
+        }
+        # Validate required args per task.
+        task = str(args.run_task)
+        if task == "underbody":
+            if not args.config:
+                print("error: --config is required for underbody", file=__import__("sys").stderr)
+                return 1
+            if not args.route:
+                print("error: --route is required for underbody", file=__import__("sys").stderr)
+                return 1
+        if task in ("panorama", "lookat"):
+            if not args.spec:
+                print(
+                    f"error: --spec is required for {task}",
+                    file=__import__("sys").stderr,
+                )
+                return 1
+        if not args.scene and not args.existing:
+            print("error: --scene is required (or use --existing)", file=__import__("sys").stderr)
+            return 1
+
+        return run_task(
+            task_id=task_map[task],
+            out_dir=args.out,
+            config_path=args.config,
+            route_kml=args.route,
+            scene_glb=args.scene,
+            spec_toml=args.spec,
+            blender_exec=args.blender_exec,
+            resume=bool(args.resume),
+            existing=bool(args.existing),
+        )
     raise AssertionError(f"unhandled command: {args.command}")

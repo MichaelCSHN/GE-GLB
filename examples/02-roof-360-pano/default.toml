@@ -1,0 +1,25 @@
+[project]
+name = "roof-360-demo"
+
+[bus]
+length_m = 12.0
+width_m = 2.55
+height_m = 3.20
+
+[spec]
+mast_height_m = 2.0
+
+[[spec.bands]]
+band_id = "horizontal"
+tilt_from_nadir_deg = 90.0
+azimuth_deg = [0.0, 90.0, 180.0, 270.0]
+
+[[spec.bands]]
+band_id = "downward"
+tilt_from_nadir_deg = 50.0
+azimuth_deg = [0.0, 90.0, 180.0, 270.0]
+
+[capture]
+image_width = 1920
+image_height = 1080
+horizontal_fov_deg = 90.0
