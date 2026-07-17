@@ -17,8 +17,10 @@ Detailed MVP gates are in `docs/tasks/01-underbody-image/mvp-plan.md`.
 - [x] Blender job generator and background render script.
 - [x] GE Pro Camera Tour planner.
 - [x] Source-independent stitch jobs and flat-ground IPM baseline.
-- [ ] Real GLB smoke test and camera-orientation calibration.
-- [ ] Explicit body/scene occlusion, exposure compensation, confidence, and source map.
+- [x] Ground-truth comparison, diagnostics (confidence, coverage, source-map), and UnderbodyImageProduct writer.
+- [x] CLI entry point for product output (`geglb product underbody`).
+- [ ] Real GLB smoke test and camera-orientation calibration. (workstation-ready, see mvp-plan.md)
+- [ ] Explicit body/scene occlusion, exposure compensation.
 - [ ] Earth Pro Save Image controller and retry state machine.
 - [ ] Blender/GE joint evaluation and parameter optimization.
 
