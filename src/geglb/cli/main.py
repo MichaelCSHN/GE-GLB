@@ -90,6 +90,15 @@ def _parser() -> argparse.ArgumentParser:
         dest="product_type",
         choices=["underbody", "panorama", "lookat"],
     )
+
+    serve_cmd = commands.add_parser(
+        "serve", help="Start the GE-GLB web dashboard"
+    )
+    serve_cmd.add_argument("--port", type=int, default=8080)
+    serve_cmd.add_argument("--host", default="127.0.0.1")
+    serve_cmd.add_argument(
+        "--dir", default="build", help="Root directory to scan for builds"
+    )
     return parser
 
 
@@ -165,4 +174,9 @@ def main(argv: list[str] | None = None) -> int:
         report = validate_product(args.product_dir, args.product_type)
         _print(report)
         return 0 if report["valid"] else 2
+    if args.command == "serve":
+        from ..server import run_server
+
+        run_server(host=args.host, port=args.port, scan_dir=args.dir)
+        return 0
     raise AssertionError(f"unhandled command: {args.command}")

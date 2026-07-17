@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ name }} — 360 Panorama</title>
+<style>
+  body { margin: 0; background: #000; }
+  #panorama { width: 100vw; height: 100vh; }
+  a { position: absolute; top: 1rem; left: 1rem; color: #fff; z-index: 10; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+</head>
+<body>
+<a href="/project/{{ name }}">← Back</a>
+<div id="panorama"></div>
+<script>
+  pannellum.viewer('panorama', {
+    "type": "equirectangular",
+    "panorama": "/static/{{ name }}/product/panorama.png",
+    "autoLoad": true,
+    "showControls": true
+  });
+</script>
+</body>
+</html>
