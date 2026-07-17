@@ -1,0 +1,59 @@
+[project]
+name = "transparent-bus-mvp"
+
+[bus]
+length_m = 12.0
+width_m = 2.55
+height_m = 3.20
+
+[route]
+placemark_name = "ROUTE"
+capture_spacing_m = 0.5
+
+[capture]
+image_width = 1920
+image_height = 1080
+fly_duration_s = 0.15
+settle_seconds = 2.5
+sunlight_enabled = false
+
+[fusion]
+# For target t_i, use every surround camera at t_i and t_i-1.
+history_frames = 1
+include_all_history_cameras = true
+# t_0 is completed when t_1 arrives, primarily from rear-looking coverage.
+bootstrap_first_frame_from_future = true
+
+[ground_truth]
+enabled = true
+id = "gt_nadir"
+height_m = 25.0
+horizontal_fov_deg = 60.0
+
+[[cameras]]
+id = "front"
+mount = "front_center"
+yaw_deg = 0.0
+tilt_deg = 50.0
+horizontal_fov_deg = 100.0
+
+[[cameras]]
+id = "rear"
+mount = "rear_center"
+yaw_deg = 180.0
+tilt_deg = 50.0
+horizontal_fov_deg = 100.0
+
+[[cameras]]
+id = "left"
+mount = "left_center"
+yaw_deg = 270.0
+tilt_deg = 50.0
+horizontal_fov_deg = 100.0
+
+[[cameras]]
+id = "right"
+mount = "right_center"
+yaw_deg = 90.0
+tilt_deg = 50.0
+horizontal_fov_deg = 100.0

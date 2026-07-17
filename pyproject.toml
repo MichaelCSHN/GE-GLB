@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ge-glb"
+version = "0.1.0"
+description = "Google Earth Pro capture planning for transparent-vehicle BEV research"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "GE-GLB contributors" }]
+dependencies = []
+
+[project.scripts]
+geglb = "geglb.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
