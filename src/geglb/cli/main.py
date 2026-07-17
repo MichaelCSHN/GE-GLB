@@ -9,6 +9,7 @@ from ..core.config import load_config
 from ..core.dataset import validate_dataset
 from ..tasks.registry import describe_tasks
 from ..tasks.underbody_image.compositor import run_planar_stitcher
+from ..tasks.underbody_image.evaluation import produce_underbody_product
 from ..tasks.underbody_image.stitch_plan import build_stitch_jobs
 from ..tasks.underbody_image.workflows.blender import build_blender_plan
 from ..tasks.underbody_image.workflows.ge3d import build_plan
@@ -68,6 +69,16 @@ def _parser() -> argparse.ArgumentParser:
     stitch_run.add_argument("--out", required=True)
     stitch_run.add_argument("--meters-per-pixel", type=float, default=0.1)
     stitch_run.add_argument("--max-frames", type=int)
+
+    product = commands.add_parser("product", help="MVP1 product and evaluation")
+    product_commands = product.add_subparsers(dest="product_command", required=True)
+    p_underbody = product_commands.add_parser(
+        "underbody", help="Produce UnderbodyImageProduct from a captured dataset"
+    )
+    p_underbody.add_argument("--dataset", required=True)
+    p_underbody.add_argument("--target-frame", type=int, required=True)
+    p_underbody.add_argument("--out", required=True)
+    p_underbody.add_argument("--meters-per-pixel", type=float, default=0.1)
     return parser
 
 
@@ -123,6 +134,17 @@ def main(argv: list[str] | None = None) -> int:
                     args.out,
                     meters_per_pixel=args.meters_per_pixel,
                     max_frames=args.max_frames,
+                )
+            )
+        return 0
+    if args.command == "product":
+        if args.product_command == "underbody":
+            _print(
+                produce_underbody_product(
+                    args.dataset,
+                    args.out,
+                    target_frame_index=args.target_frame,
+                    meters_per_pixel=args.meters_per_pixel,
                 )
             )
         return 0

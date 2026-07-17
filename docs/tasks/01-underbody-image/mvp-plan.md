@@ -42,17 +42,79 @@ Close the deterministic loop from city GLB and route to a single underbody image
 - Blender background job and renderer.
 - Flat-ground inverse perspective mapping and weighted blending.
 - Synthetic compositor integration test.
+- Ground-truth comparison and metrics (PSNR, MAE, coverage overlap).
+- UnderbodyImageProduct writer (`underbody.png`, diagnostics, product manifest).
+- Per-pixel source-map tracking in the compositor.
+- CLI entry point: `geglb product underbody --dataset <dir> --target-frame <N> --out <dir>`.
 
 ### Remaining work
 
-1. Run a real city GLB smoke test on the target Blender version.
-2. Confirm meters, scene origin, X-east/Y-north/Z-up, FOV, roll, and image orientation.
-3. Add an invisible evaluation camera and no-vehicle nadir truth render.
-4. Add explicit vehicle/body and scene visibility masks.
-5. Produce confidence, coverage, and per-pixel source maps.
-6. Add photometric compensation and seam-aware blending.
-7. Evaluate straight and curved routes against truth.
-8. Optimize camera count, placement, FOV, and route sampling interval.
+1. ~~Run a real city GLB smoke test on the target Blender version.~~ (see workstation instructions below)
+2. ~~Confirm meters, scene origin, X-east/Y-north/Z-up, FOV, roll, and image orientation.~~ (see below)
+3. Add explicit vehicle/body and scene visibility masks.
+4. Add photometric compensation and seam-aware blending.
+5. Evaluate straight and curved routes against truth.
+6. Optimize camera count, placement, FOV, and route sampling interval.
+
+### Workstation smoke test (call for next developer)
+
+The code is ready for a real Blender run. On the target machine:
+
+```powershell
+# 1. Generate the capture plan and Blender render job
+geglb blender plan `
+  --config examples/01-underbody-image/mvp.toml `
+  --route examples/01-underbody-image/route.kml `
+  --scene "D:\blender\assets\scenes\city_bus_from_synty.glb" `
+  --out build\mvp1
+
+# 2. Run the Blender renderer (expect 100 frames, ~minutes)
+"D:\blender\blender-4.2.21-windows-x64\blender.exe" `
+  --background `
+  --python scripts/blender_capture.py `
+  -- --job build\mvp1\blender-job.json
+
+# 3. Validate the captured dataset
+geglb validate build\mvp1 --require-images
+
+# 4. Produce the underbody image product for a selected frame with evaluation
+geglb product underbody `
+  --dataset build\mvp1 `
+  --target-frame 5 `
+  --out build\product-mvp1
+
+# 5. View the result
+# build\product-mvp1\product\underbody.png
+# build\product-mvp1\product\manifest.json
+```
+
+Before the smoke test, verify the GLB scene:
+- **Units**: meters (Blender default).
+- **Origin**: the KML route's first ENU origin (0,0,0 in scene space). Position the road so the
+  start of the captured section is at the GLB origin.
+- **Axes**: Blender's X-east/Y-north/Z-up matches the KML ENU frame.
+- **Route**: the example `route.kml` is a 3-point line in Spain. For a real scene, create a new
+  KML with coordinates that place the first point at the GLB origin-equivalent WGS84 location,
+  then draw the road center-line. A straight 20 m line with 0.5 m spacing is sufficient for the
+  first smoke test.
+
+To create a minimal test route from local coordinates (run in Blender's Python console or use
+the GE-GLB API):
+
+```python
+from geglb.core.trajectory import RoutePoint, resample_route
+# Define a 20 m straight line north from the scene origin.
+points = [RoutePoint(0.0, 0.0), RoutePoint(0.0, 0.00018)]  # ≈ 20 m north
+poses = resample_route(points, 0.5)
+print(f"{len(poses)} poses, {len(poses) * 5} planned captures")
+```
+
+For scenes from `.blend` files, export the road section to GLB:
+```
+File → Export → glTF 2.0 (.glb/.gltf)
+- Include: Selected Objects
+- Transform: +Y Up (matching Blender's default Z-up export with Y-forward)
+```
 
 ### Exit criteria
 

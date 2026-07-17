@@ -17,6 +17,7 @@ def run_planar_stitcher(
     margin_rear_m: float = 5.0,
     margin_side_m: float = 3.0,
     max_frames: int | None = None,
+    track_source: bool = False,
 ) -> dict[str, object]:
     """Reference flat-ground IPM stitcher for any GE-GLB capture backend.
 
@@ -69,10 +70,14 @@ def run_planar_stitcher(
     bev_dir.mkdir(parents=True, exist_ok=True)
     rendered = 0
     coverage_values: list[float] = []
+    source_maps: list[np.ndarray | None] = [] if track_source else None  # type: ignore[assignment]
     for job in jobs:
         color_sum = np.zeros((height, width, 3), dtype=np.float64)
         weight_sum = np.zeros((height, width), dtype=np.float64)
-        for observation in job["inputs"]:
+        if track_source:
+            best_weight = np.zeros((height, width), dtype=np.float64)
+            source_idx = np.full((height, width), -1, dtype=np.int16)
+        for obs_index, observation in enumerate(job["inputs"]):
             camera_id = str(observation["camera_id"])
             calibration = calibrations[camera_id]
             image = load_image(str(observation["image"]))
@@ -86,6 +91,12 @@ def run_planar_stitcher(
             )
             color_sum += sampled * weight[..., None]
             weight_sum += weight
+            if track_source:
+                better = weight > best_weight
+                source_idx[better] = obs_index
+                best_weight = np.maximum(best_weight, weight)
+        if track_source:
+            source_maps.append(source_idx)  # type: ignore[union-attr]
         valid = weight_sum > 1e-12
         rgb = np.zeros((height, width, 3), dtype=np.uint8)
         rgb[valid] = np.clip(color_sum[valid] / weight_sum[valid, None], 0.0, 255.0).astype(
@@ -99,6 +110,17 @@ def run_planar_stitcher(
         Image.fromarray(rgba, mode="RGBA").save(destination)
         rendered += 1
         coverage_values.append(float(valid.mean()))
+
+    diagnostics_subdir = output / "diagnostics"
+    if track_source:
+        diagnostics_subdir.mkdir(parents=True, exist_ok=True)
+        for idx, src in enumerate(source_maps):
+            if src is None:
+                continue
+            label_path = diagnostics_subdir / f"source-map-{idx:06d}.png"
+            n_obs = max(1, len(jobs[idx]["inputs"]))
+            label_8u = np.clip(src * (255 // n_obs), 0, 255).astype(np.uint8)
+            Image.fromarray(label_8u, mode="L").save(label_path)
 
     manifest = {
         "schema_version": "ge-glb.stitch-result/v1",
@@ -122,6 +144,10 @@ def run_planar_stitcher(
         "frames_rendered": rendered,
         "mean_coverage": (sum(coverage_values) / len(coverage_values) if coverage_values else 0.0),
     }
+    if track_source:
+        manifest["diagnostics"] = {
+            "source_maps": "diagnostics/source-map-*.png",
+        }
     write_json(output / "result.json", manifest)
     return manifest
 
