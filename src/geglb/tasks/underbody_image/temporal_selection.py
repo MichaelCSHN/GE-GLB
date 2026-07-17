@@ -62,8 +62,7 @@ def build_fusion_plan(
     targets: list[dict[str, object]] = []
     for target_index, target in enumerate(poses):
         observations = [
-            _observation(target, target, camera, "current_surround", 0)
-            for camera in cameras
+            _observation(target, target, camera, "current_surround", 0) for camera in cameras
         ]
 
         if target_index > 0:

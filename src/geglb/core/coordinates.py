@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-
+from dataclasses import dataclass
 
 WGS84_A = 6_378_137.0
 WGS84_E2 = 6.69437999014e-3
@@ -29,12 +28,12 @@ class LocalFrame:
         self, longitude_deg: float, latitude_deg: float, altitude_m: float = 0.0
     ) -> tuple[float, float, float]:
         meridian, prime_vertical, cos_lat = self._radii
-        east = math.radians(longitude_deg - self.longitude_deg) * (
-            prime_vertical + self.altitude_m
-        ) * cos_lat
-        north = math.radians(latitude_deg - self.latitude_deg) * (
-            meridian + self.altitude_m
+        east = (
+            math.radians(longitude_deg - self.longitude_deg)
+            * (prime_vertical + self.altitude_m)
+            * cos_lat
         )
+        north = math.radians(latitude_deg - self.latitude_deg) * (meridian + self.altitude_m)
         up = altitude_m - self.altitude_m
         return east, north, up
 
@@ -45,15 +44,11 @@ class LocalFrame:
         longitude = self.longitude_deg + math.degrees(
             east_m / ((prime_vertical + self.altitude_m) * cos_lat)
         )
-        latitude = self.latitude_deg + math.degrees(
-            north_m / (meridian + self.altitude_m)
-        )
+        latitude = self.latitude_deg + math.degrees(north_m / (meridian + self.altitude_m))
         return longitude, latitude, self.altitude_m + up_m
 
 
-def body_offset_to_enu(
-    forward_m: float, left_m: float, heading_deg: float
-) -> tuple[float, float]:
+def body_offset_to_enu(forward_m: float, left_m: float, heading_deg: float) -> tuple[float, float]:
     """Transform a vehicle-frame offset into east/north coordinates."""
 
     heading = math.radians(heading_deg)

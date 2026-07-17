@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import ast
 import json
-from pathlib import Path
 import unittest
+from pathlib import Path
 
+from geglb.capture.registry import BACKENDS
 from geglb.products import (
     LookAtViewSetProduct,
     Panorama360Product,
     UnderbodyImageProduct,
 )
 from geglb.tasks.drone_lookat_set import DroneLookAtSpec, enumerate_hemisphere
+from geglb.tasks.registry import TASKS
 from geglb.tasks.roof_360_pano import CaptureBand, Roof360Spec
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,9 +48,7 @@ class ArchitectureTests(unittest.TestCase):
         schemas = {product.product_schema for product in products}
         artifacts = {product.primary_artifact for product in products}
         self.assertEqual(len(schemas), 3)
-        self.assertEqual(
-            artifacts, {"underbody.png", "panorama.png", "viewset.json"}
-        )
+        self.assertEqual(artifacts, {"underbody.png", "panorama.png", "viewset.json"})
 
     def test_roof_bands_and_hemisphere_specs_validate(self) -> None:
         roof = Roof360Spec(
@@ -75,6 +74,12 @@ class ArchitectureTests(unittest.TestCase):
             with self.subTest(path=path):
                 value = json.loads(path.read_text(encoding="utf-8"))
                 self.assertIn("$schema", value)
+
+    def test_registry_identifiers_are_unique(self) -> None:
+        backend_ids = [item.backend_id for item in BACKENDS]
+        task_ids = [item.task_id for item in TASKS]
+        self.assertEqual(len(backend_ids), len(set(backend_ids)))
+        self.assertEqual(len(task_ids), len(set(task_ids)))
 
 
 if __name__ == "__main__":

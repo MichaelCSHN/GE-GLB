@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from functools import lru_cache
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 
 from ...core.dataset import read_jsonl, validate_dataset, write_json
@@ -35,7 +35,9 @@ def run_planar_stitcher(
         import numpy as np
         from PIL import Image
     except ImportError as exc:
-        raise RuntimeError("install the stitching extra: python -m pip install -e .[stitch]") from exc
+        raise RuntimeError(
+            "install the stitching extra: python -m pip install -e .[stitch]"
+        ) from exc
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -86,9 +88,9 @@ def run_planar_stitcher(
             weight_sum += weight
         valid = weight_sum > 1e-12
         rgb = np.zeros((height, width, 3), dtype=np.uint8)
-        rgb[valid] = np.clip(
-            color_sum[valid] / weight_sum[valid, None], 0.0, 255.0
-        ).astype(np.uint8)
+        rgb[valid] = np.clip(color_sum[valid] / weight_sum[valid, None], 0.0, 255.0).astype(
+            np.uint8
+        )
         alpha = np.where(valid, 255, 0).astype(np.uint8)
         rgba = np.dstack((rgb, alpha))
         relative_output = Path(str(job["output"]))
@@ -118,9 +120,7 @@ def run_planar_stitcher(
             "right_extent_m": right_extent,
         },
         "frames_rendered": rendered,
-        "mean_coverage": (
-            sum(coverage_values) / len(coverage_values) if coverage_values else 0.0
-        ),
+        "mean_coverage": (sum(coverage_values) / len(coverage_values) if coverage_values else 0.0),
     }
     write_json(output / "result.json", manifest)
     return manifest

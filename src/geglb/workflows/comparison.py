@@ -18,9 +18,7 @@ def _load(root: Path) -> tuple[dict[str, object], list[dict[str, object]], list[
     )
 
 
-def _nearest(
-    candidates: list[dict[str, object]], distance_m: float
-) -> dict[str, object] | None:
+def _nearest(candidates: list[dict[str, object]], distance_m: float) -> dict[str, object] | None:
     if not candidates:
         return None
     distances = [float(item["distance_m"]) for item in candidates]
@@ -63,8 +61,10 @@ def combine_datasets(
             continue
         camera_id = str(primary["camera_id"])
         match = _nearest(by_camera.get(camera_id, []), float(primary["distance_m"]))
-        error = None if match is None else abs(
-            float(match["distance_m"]) - float(primary["distance_m"])
+        error = (
+            None
+            if match is None
+            else abs(float(match["distance_m"]) - float(primary["distance_m"]))
         )
         if match is None or error is None or error > max_distance_m:
             unmatched += 1

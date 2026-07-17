@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from ....core.config import CaptureConfig
 from ....core.camera import CameraState
+from ....core.config import CaptureConfig
 from ....core.trajectory import VehiclePose
-
 
 KML_NS = "http://www.opengis.net/kml/2.2"
 GX_NS = "http://www.google.com/kml/ext/2.2"

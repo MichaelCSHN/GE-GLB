@@ -5,6 +5,9 @@
 A backend consumes a neutral CapturePlan and emits a CaptureDataset plus backend artifacts. It
 declares capabilities instead of being inspected by name. Typical capabilities include GLB scene
 import, geodetic coordinates, roll, horizontal FOV, depth, segmentation, or resumable capture.
+Planning returns a typed `PlanResult`: stable workflow/source/output fields, named counts, declared
+artifacts, and a bounded backend-detail mapping. The v0.x mapping view remains available during the
+compatibility window.
 
 ## CaptureDataset
 
@@ -16,6 +19,8 @@ capabilities are explicit. Artifact paths are relative to the dataset root.
 
 A processor accepts a validated dataset and TaskSpec, then emits one versioned task product. It may
 reject a dataset that lacks declared capabilities, but it must not branch on backend identity.
+There is intentionally no generic `StitchBackend`: stitching is only one possible task operation,
+and forcing panorama or view-set production through that name would weaken the product boundary.
 
 ## Products
 

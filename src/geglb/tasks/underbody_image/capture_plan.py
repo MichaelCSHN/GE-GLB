@@ -3,18 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ...core.config import ProjectConfig
-from .temporal_selection import build_fusion_plan
 from ...core.camera import (
     CameraState,
     camera_calibration,
     camera_state_for_pose,
+    camera_to_vehicle_transform,
     ground_truth_state_for_pose,
     intrinsics,
-    camera_to_vehicle_transform,
     state_as_dict,
 )
+from ...core.config import ProjectConfig
 from ...core.trajectory import RoutePoint, VehiclePose, load_route_kml, resample_route
+from .temporal_selection import build_fusion_plan
 
 
 @dataclass(frozen=True)
@@ -57,8 +57,7 @@ def build_capture_model(config: ProjectConfig, route_kml: str | Path) -> Capture
             "height_m": config.bus.height_m,
         },
         "cameras": [
-            camera_calibration(camera, config.bus, config.capture)
-            for camera in config.cameras
+            camera_calibration(camera, config.bus, config.capture) for camera in config.cameras
         ],
     }
     if config.ground_truth.enabled:
@@ -73,9 +72,7 @@ def build_capture_model(config: ProjectConfig, route_kml: str | Path) -> Capture
             "camera_to_vehicle": camera_to_vehicle_transform(
                 (0.0, 0.0, config.ground_truth.height_m), 0.0, 0.0, 0.0
             ),
-            "intrinsics": intrinsics(
-                config.ground_truth.horizontal_fov_deg, config.capture
-            ),
+            "intrinsics": intrinsics(config.ground_truth.horizontal_fov_deg, config.capture),
             "use_for_reconstruction": False,
         }
 

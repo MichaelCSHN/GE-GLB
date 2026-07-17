@@ -52,6 +52,8 @@ products <- tasks
 ## Required checks
 
 ```bash
+ruff check src scripts tests
+ruff format --check src scripts tests
 PYTHONPATH=src python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
 git diff --check

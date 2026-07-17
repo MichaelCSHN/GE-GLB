@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-import tomllib
 
 
 @dataclass(frozen=True)
@@ -143,9 +143,7 @@ def load_config(path: str | Path) -> ProjectConfig:
     fusion_raw = raw.get("fusion", {})
     fusion = FusionConfig(
         history_frames=int(fusion_raw.get("history_frames", 1)),
-        include_all_history_cameras=bool(
-            fusion_raw.get("include_all_history_cameras", True)
-        ),
+        include_all_history_cameras=bool(fusion_raw.get("include_all_history_cameras", True)),
         bootstrap_first_frame_from_future=bool(
             fusion_raw.get("bootstrap_first_frame_from_future", True)
         ),

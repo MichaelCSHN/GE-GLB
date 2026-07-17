@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
+from geglb.core.camera import camera_to_vehicle_transform
 from geglb.core.config import load_config
 from geglb.core.dataset import read_jsonl, validate_dataset
-from geglb.tasks.underbody_image.workflows.ge3d import build_plan
 from geglb.core.trajectory import RoutePoint, load_route_kml, resample_route
-from geglb.core.camera import camera_to_vehicle_transform
-
+from geglb.tasks.underbody_image.workflows.ge3d import build_plan
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "01-underbody-image"
@@ -69,9 +68,7 @@ class PlannerTests(unittest.TestCase):
             self.assertEqual(second["status"], "causal")
             self.assertEqual(len(second["observations"]), 8)
             current = [
-                item
-                for item in second["observations"]
-                if item["role"] == "current_surround"
+                item for item in second["observations"] if item["role"] == "current_surround"
             ]
             self.assertTrue(all(item["heuristic_prior"] == 1.0 for item in current))
             previous = [

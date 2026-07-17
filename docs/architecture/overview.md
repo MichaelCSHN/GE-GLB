@@ -16,4 +16,6 @@ Top-level packages have stable responsibilities:
 - `cli`: argument parsing only.
 
 Current flat `geglb.*` modules are compatibility re-exports. New code belongs in the layered
-packages. A compatibility wrapper must never become the owner of new behavior.
+packages. A compatibility wrapper must never become the owner of new behavior. These imports are
+marked deprecated but remain available throughout v0.x; removal requires an explicit v1.0 decision
+and migration note.

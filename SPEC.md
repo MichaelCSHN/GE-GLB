@@ -88,6 +88,10 @@ tasks must target the shared run layout and their own product schema.
 Schema changes require an explicit version change, migration note, validator update, fixture, and
 backward-compatibility decision.
 
+The authoritative lifecycle and code mapping for individual schema files is maintained in
+[`schemas/README.md`](schemas/README.md). Planned v2 schemas are design targets, not claims that a
+v2 writer or runtime validator already exists.
+
 ## Acceptance principles
 
 - Identical task specs produce identical planned observation identifiers.

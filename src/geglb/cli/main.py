@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Mapping
 
-from ..tasks.underbody_image.workflows.blender import build_blender_plan
 from ..capture.registry import describe_backends
-from ..tasks.underbody_image.compositor import run_planar_stitcher
-from ..workflows.comparison import combine_datasets
 from ..core.config import load_config
 from ..core.dataset import validate_dataset
-from ..tasks.underbody_image.workflows.ge3d import build_plan
-from ..tasks.underbody_image.stitch_plan import build_stitch_jobs
 from ..tasks.registry import describe_tasks
+from ..tasks.underbody_image.compositor import run_planar_stitcher
+from ..tasks.underbody_image.stitch_plan import build_stitch_jobs
+from ..tasks.underbody_image.workflows.blender import build_blender_plan
+from ..tasks.underbody_image.workflows.ge3d import build_plan
+from ..workflows.comparison import combine_datasets
 
 
 def _capture_arguments(parser: argparse.ArgumentParser) -> None:
@@ -70,8 +71,8 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _print(value: dict[str, object]) -> None:
-    print(json.dumps(value, ensure_ascii=False, indent=2))
+def _print(value: Mapping[str, object]) -> None:
+    print(json.dumps(dict(value), ensure_ascii=False, indent=2))
 
 
 def main(argv: list[str] | None = None) -> int:

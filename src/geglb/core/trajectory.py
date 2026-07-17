@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
 import bisect
 import math
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from pathlib import Path
 
 from .coordinates import LocalFrame, heading_from_delta
 
@@ -61,7 +61,8 @@ def load_route_kml(path: str | Path, placemark_name: str = "ROUTE") -> list[Rout
             raise ValueError(f"Placemark {placemark_name!r} needs at least two route points")
         return points
     raise ValueError(
-        f"No LineString Placemark named {placemark_name!r}; available: {', '.join(available) or 'none'}"
+        f"No LineString Placemark named {placemark_name!r}; "
+        f"available: {', '.join(available) or 'none'}"
     )
 
 
@@ -94,7 +95,10 @@ def resample_route(points: list[RoutePoint], spacing_m: float) -> list[VehiclePo
 
     sampled_xy: list[tuple[float, float]] = []
     for sample in sample_distances:
-        segment_index = max(0, min(len(cumulative) - 2, bisect.bisect_right(cumulative, sample) - 1))
+        segment_index = max(
+            0,
+            min(len(cumulative) - 2, bisect.bisect_right(cumulative, sample) - 1),
+        )
         start_distance = cumulative[segment_index]
         end_distance = cumulative[segment_index + 1]
         span = end_distance - start_distance

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import math
+from dataclasses import asdict, dataclass
 
 from .config import BusConfig, CameraConfig, CaptureConfig, GroundTruthConfig
 from .coordinates import LocalFrame, body_offset_to_enu
@@ -38,13 +38,12 @@ def resolve_mount(camera: CameraConfig, bus: BusConfig) -> tuple[float, float, f
         return mounts[camera.mount]
     except KeyError as exc:
         raise ValueError(
-            f"unknown mount {camera.mount!r} for {camera.camera_id}; use position_m for custom mounts"
+            f"unknown mount {camera.mount!r} for {camera.camera_id}; "
+            "use position_m for custom mounts"
         ) from exc
 
 
-def camera_state_for_pose(
-    pose: VehiclePose, camera: CameraConfig, bus: BusConfig
-) -> CameraState:
+def camera_state_for_pose(pose: VehiclePose, camera: CameraConfig, bus: BusConfig) -> CameraState:
     forward, left, up = resolve_mount(camera, bus)
     east_offset, north_offset = body_offset_to_enu(forward, left, pose.heading_deg)
     frame = LocalFrame(pose.longitude_deg, pose.latitude_deg)

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from ....core.config import ProjectConfig
 from ....core.dataset import write_json, write_standard_dataset
+from ....core.results import PlanResult
 from ..capture_plan import build_capture_model
 
 
@@ -16,7 +17,7 @@ def build_blender_plan(
     render_engine: str = "BLENDER_EEVEE_NEXT",
     samples: int = 32,
     transparent_background: bool = False,
-) -> dict[str, object]:
+) -> PlanResult:
     """MVP1: prepare a deterministic job for Blender's bundled Python runtime."""
 
     scene = Path(scene_glb).expanduser().resolve()
@@ -76,12 +77,15 @@ def build_blender_plan(
             ],
         },
     )
-    return {
-        "mvp": "MVP1",
-        "source_kind": "blender",
-        "output_dir": str(output.resolve()),
-        "scene_glb": str(scene),
-        "poses": len(model.poses),
-        "captures": len(model.entries),
-        "fusion_targets": len(model.fusion_plan["targets"]),
-    }
+    return PlanResult(
+        workflow_id="MVP1",
+        source_kind="blender",
+        output_dir=str(output.resolve()),
+        counts={
+            "poses": len(model.poses),
+            "captures": len(model.entries),
+            "fusion_targets": len(model.fusion_plan["targets"]),
+        },
+        artifacts=("blender-job.json", "blender-command.json"),
+        details={"scene_glb": str(scene)},
+    )

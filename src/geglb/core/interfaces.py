@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Protocol
 
 from .config import ProjectConfig
+from .results import PlanResult
 
 
 class CaptureBackend(Protocol):
@@ -16,12 +17,4 @@ class CaptureBackend(Protocol):
         config: ProjectConfig,
         route: str | Path,
         output_dir: str | Path,
-    ) -> dict[str, object]: ...
-
-
-class StitchBackend(Protocol):
-    """A source-independent consumer of a validated GE-GLB dataset."""
-
-    stitcher_id: str
-
-    def run(self, dataset_dir: str | Path, output_dir: str | Path) -> dict[str, object]: ...
+    ) -> PlanResult: ...

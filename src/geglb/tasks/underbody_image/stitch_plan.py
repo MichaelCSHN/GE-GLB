@@ -40,9 +40,7 @@ def build_stitch_jobs(dataset_dir: str | Path, output_dir: str | Path) -> dict[s
                     "image": frame["image"],
                     "role": observation["role"],
                     "heuristic_prior": observation["heuristic_prior"],
-                    "source_vehicle_in_target_frame": observation[
-                        "source_vehicle_in_target_frame"
-                    ],
+                    "source_vehicle_in_target_frame": observation["source_vehicle_in_target_frame"],
                 }
             )
         jobs.append(

@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import json
-from dataclasses import replace
-from pathlib import Path
 import py_compile
 import tempfile
 import unittest
+from dataclasses import replace
+from pathlib import Path
 
-from geglb.tasks.underbody_image.workflows.blender import build_blender_plan
-from geglb.tasks.underbody_image.compositor import run_planar_stitcher
-from geglb.workflows.comparison import combine_datasets
 from geglb.core.config import CameraConfig, load_config
 from geglb.core.dataset import read_jsonl, validate_dataset
-from geglb.tasks.underbody_image.workflows.ge3d import build_plan
+from geglb.core.results import PlanResult
+from geglb.tasks.underbody_image.compositor import run_planar_stitcher
 from geglb.tasks.underbody_image.stitch_plan import build_stitch_jobs
-
+from geglb.tasks.underbody_image.workflows.blender import build_blender_plan
+from geglb.tasks.underbody_image.workflows.ge3d import build_plan
+from geglb.workflows.comparison import combine_datasets
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "01-underbody-image"
@@ -31,14 +31,14 @@ class BlenderBackendTests(unittest.TestCase):
                 EXAMPLE / "minimal.gltf",
                 output,
             )
+            self.assertIsInstance(summary, PlanResult)
+            self.assertEqual(summary.workflow_id, "MVP1")
             self.assertEqual(summary["mvp"], "MVP1")
             job = json.loads((output / "blender-job.json").read_text(encoding="utf-8"))
             self.assertEqual(job["schema_version"], "ge-glb.blender-job/v1")
             self.assertEqual(len(job["frames"]), summary["captures"])
             self.assertEqual(job["frames"][0]["camera_id"], "front")
-            self.assertAlmostEqual(
-                job["frames"][0]["camera_world"]["local_enu_m"]["up"], 3.05
-            )
+            self.assertAlmostEqual(job["frames"][0]["camera_world"]["local_enu_m"]["up"], 3.05)
             validation = validate_dataset(output)
             self.assertTrue(validation["valid"], validation)
             self.assertEqual(validation["source_kind"], "blender")
@@ -72,7 +72,10 @@ class CombinedDatasetTests(unittest.TestCase):
             self.assertEqual(summary["unmatched_primary_frames"], 0)
             pairs = read_jsonl(combined / "pairs.jsonl")
             self.assertEqual(len(pairs), 25 * 4)
-            self.assertEqual({pair["camera_id"] for pair in pairs}, {"front", "rear", "left", "right"})
+            self.assertEqual(
+                {pair["camera_id"] for pair in pairs},
+                {"front", "rear", "left", "right"},
+            )
 
     def test_stitch_jobs_do_not_depend_on_capture_source(self) -> None:
         config = load_config(EXAMPLE / "mvp.toml")
@@ -95,8 +98,8 @@ class CombinedDatasetTests(unittest.TestCase):
 
     def test_flat_ground_stitcher_consumes_standard_dataset(self) -> None:
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
         except ImportError:
             self.skipTest("optional stitching dependencies are unavailable")
         base = load_config(EXAMPLE / "mvp.toml")
@@ -132,9 +135,7 @@ class CombinedDatasetTests(unittest.TestCase):
                 Image.fromarray(
                     np.full((64, 64, 3), (220, 30, 10), dtype=np.uint8), mode="RGB"
                 ).save(image_path)
-            result = run_planar_stitcher(
-                dataset, output, meters_per_pixel=0.5, max_frames=2
-            )
+            result = run_planar_stitcher(dataset, output, meters_per_pixel=0.5, max_frames=2)
             self.assertEqual(result["frames_rendered"], 2)
             self.assertGreater(result["mean_coverage"], 0.0)
             with Image.open(output / "bev" / "000001.png") as bev:
@@ -142,6 +143,20 @@ class CombinedDatasetTests(unittest.TestCase):
             visible = pixels[..., 3] > 0
             self.assertTrue(visible.any())
             self.assertGreater(float(pixels[..., 0][visible].mean()), 200.0)
+
+    def test_stitcher_rejects_missing_images_instead_of_synthesizing_them(self) -> None:
+        config = load_config(EXAMPLE / "mvp.toml")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dataset = root / "dataset"
+            build_blender_plan(
+                config,
+                EXAMPLE / "route.kml",
+                EXAMPLE / "minimal.gltf",
+                dataset,
+            )
+            with self.assertRaisesRegex(ValueError, "image files are missing"):
+                run_planar_stitcher(dataset, root / "bev", max_frames=1)
 
 
 if __name__ == "__main__":

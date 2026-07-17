@@ -9,6 +9,10 @@
 - [ ] Introduce `ge-glb.capture-dataset/v2` alongside the v1 compatibility writer.
 - [ ] Add run-level provenance, content hashes, and resumable execution state.
 
+Next acceptance gate: generated v1 instances pass their active schemas; planned v2 schemas remain
+clearly marked inactive; compatibility imports contain no new behavior and have an explicit v1.0
+retirement decision.
+
 ## Task 01 — Underbody image
 
 Detailed MVP gates are in `docs/tasks/01-underbody-image/mvp-plan.md`.
@@ -22,6 +26,10 @@ Detailed MVP gates are in `docs/tasks/01-underbody-image/mvp-plan.md`.
 - [ ] Earth Pro Save Image controller and retry state machine.
 - [ ] Blender/GE joint evaluation and parameter optimization.
 
+Next acceptance gate: a real Blender straight/curve fixture completes without missing surround
+images, ground truth is absent from every reconstruction job, and baseline metrics are recorded
+before numerical pass/fail thresholds are frozen.
+
 ## Task 02 — Roof 360 panorama
 
 - [x] Product and capture-band specification boundary.
@@ -31,6 +39,9 @@ Detailed MVP gates are in `docs/tasks/01-underbody-image/mvp-plan.md`.
 - [ ] Add one-panorama product validator and quality metrics.
 - [ ] Reserve real mast-camera synchronization/calibration importer.
 
+Next acceptance gate: one neutral capture plan validates overlap and spherical coverage before a
+backend-specific renderer is added; one product fixture validates against the panorama schema.
+
 ## Task 03 — Drone LookAt view set
 
 - [x] Product, hemisphere, and LookAt parameter boundary.
@@ -39,6 +50,9 @@ Detailed MVP gates are in `docs/tasks/01-underbody-image/mvp-plan.md`.
 - [ ] Generate Blender and GE 3D capture plans.
 - [ ] Build `viewset.json`, thumbnails, contact sheet, and completeness metrics.
 - [ ] Reserve real drone telemetry/gimbal/time synchronization importer.
+
+Next acceptance gate: observer poses preserve radius and LookAt target within declared numerical
+tolerances, and a generated `viewset.json` validates against the product schema.
 
 ## Delivery order
 

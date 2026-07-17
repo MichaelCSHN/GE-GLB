@@ -3,6 +3,13 @@
 Pluggable acquisition and product pipelines for vehicle-centered visual research. Virtual capture
 uses Blender or GE 3D; real capture is a vendor-neutral engineering-stage interface.
 
+## Why this project
+
+Vehicle bodies hide part of the road surface in an ordinary surround-view composite. GE-GLB uses
+repeatable virtual capture to study how current and temporal observations can reconstruct that
+blind region. The same capture foundation also supports elevated 360 panoramas and vehicle-centered
+LookAt view sets without forcing their different outputs into one image format.
+
 ## Three tasks
 
 | Task | Acquisition geometry | Primary product |
@@ -14,9 +21,20 @@ uses Blender or GE 3D; real capture is a vendor-neutral engineering-stage interf
 The common interface ends at CaptureDataset. Final products are versioned independently and must
 not be forced into one representation.
 
-Start with [SPEC.md](SPEC.md), [PLAN.md](PLAN.md), and [AGENTS.md](AGENTS.md). Task 01 design and its
-three MVP gates are under [`docs/tasks/01-underbody-image/`](docs/tasks/01-underbody-image/).
-Machine-readable contracts are under [`schemas/`](schemas/).
+## Documentation map
+
+| Document | Authority |
+| --- | --- |
+| [SPEC.md](SPEC.md) | Product boundaries, coordinate conventions, and versioned contracts |
+| [PLAN.md](PLAN.md) | Delivery order and acceptance gates |
+| [AGENTS.md](AGENTS.md) | Repository and change discipline for development agents |
+| [Architecture overview](docs/architecture/overview.md) | Package ownership and dependency direction |
+| [Interface standards](docs/architecture/interfaces.md) | Capture, dataset, processor, and product interfaces |
+| [Task 01 design](docs/tasks/01-underbody-image/design-zh.md) | Underbody acquisition and temporal reconstruction |
+| [Task 01 MVP plan](docs/tasks/01-underbody-image/mvp-plan.md) | Blender, Earth Pro, and cross-domain gates |
+| [Task 02](docs/tasks/02-roof-360-pano/README.md) | Roof-mounted 360 panorama design |
+| [Task 03](docs/tasks/03-drone-lookat-set/README.md) | Drone LookAt hemisphere view-set design |
+| [Schema catalog](schemas/README.md) | Schema status and schema-to-code mapping |
 
 ## Standard dataset
 
@@ -47,6 +65,7 @@ geglb backends
 ```
 
 The planning, validation, and pairing tools use Python 3.11+ and the standard library only.
+Contributors can install `.[stitch,dev]` to run schema validation and Ruff checks.
 
 ## Task 01 MVP1: Blender
 

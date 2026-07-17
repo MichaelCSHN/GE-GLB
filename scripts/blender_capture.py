@@ -8,8 +8,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def _arguments() -> argparse.Namespace:
@@ -110,7 +110,11 @@ def run(job_path: Path) -> None:
                 cameras[camera_id] = camera
             state = item["camera_world"]
             position = state["local_enu_m"]
-            camera.location = (float(position["east"]), float(position["north"]), float(position["up"]))
+            camera.location = (
+                float(position["east"]),
+                float(position["north"]),
+                float(position["up"]),
+            )
             camera.rotation_mode = "QUATERNION"
             camera.rotation_quaternion = _rotation(
                 mathutils,

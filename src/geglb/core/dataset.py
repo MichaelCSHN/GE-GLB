@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable
+from typing import Any
 
 from .config import ProjectConfig
 from .coordinates import LocalFrame
-
 
 DATASET_SCHEMA = "ge-glb.dataset/v1"
 
@@ -81,9 +81,7 @@ def write_standard_dataset(
         state = entry["camera"]
         if not isinstance(state, dict):
             raise TypeError("capture entry camera must be a mapping")
-        east, north, _ = frame.to_local(
-            float(state["longitude_deg"]), float(state["latitude_deg"])
-        )
+        east, north, _ = frame.to_local(float(state["longitude_deg"]), float(state["latitude_deg"]))
         frames.append(
             {
                 "sequence": entry["sequence"],
@@ -187,7 +185,9 @@ def validate_dataset(dataset_dir: str | Path, require_images: bool = False) -> d
     if require_images and missing_images:
         errors.append(f"{len(missing_images)} image files are missing")
 
-    warnings = [] if not missing_images else [f"{len(missing_images)} planned images are not present"]
+    warnings = (
+        [] if not missing_images else [f"{len(missing_images)} planned images are not present"]
+    )
     return {
         "valid": not errors,
         "errors": errors,

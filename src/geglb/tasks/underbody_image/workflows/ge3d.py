@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import csv
-import json
 from pathlib import Path
 
+from ....capture.virtual.ge3d.kml import build_capture_tour
 from ....core.config import ProjectConfig
 from ....core.dataset import write_json, write_standard_dataset
-from ....capture.virtual.ge3d.kml import build_capture_tour
+from ....core.results import PlanResult
 from ..capture_plan import CaptureModel, build_capture_model
 
 
@@ -45,7 +45,7 @@ def build_plan(
     config: ProjectConfig,
     route_kml: str | Path,
     output_dir: str | Path,
-) -> dict[str, object]:
+) -> PlanResult:
     """MVP2: build a GE Pro tour plus the source-independent dataset skeleton."""
 
     output = Path(output_dir)
@@ -67,14 +67,19 @@ def build_plan(
     tour = build_capture_tour(config.name, model.poses, model.ordered_states, config.capture)
     tour.write(output / "capture-tour.kml", encoding="utf-8", xml_declaration=True)
 
-    return {
-        "mvp": "MVP2",
-        "source_kind": "ge_pro",
-        "output_dir": str(output.resolve()),
-        "route_points": len(model.route_points),
-        "poses": len(model.poses),
-        "captures": len(model.entries),
-        "fusion_targets": len(model.fusion_plan["targets"]),
-        "camera_ids": [camera.camera_id for camera in config.cameras]
-        + ([config.ground_truth.camera_id] if config.ground_truth.enabled else []),
-    }
+    return PlanResult(
+        workflow_id="MVP2",
+        source_kind="ge_pro",
+        output_dir=str(output.resolve()),
+        counts={
+            "route_points": len(model.route_points),
+            "poses": len(model.poses),
+            "captures": len(model.entries),
+            "fusion_targets": len(model.fusion_plan["targets"]),
+        },
+        artifacts=("capture-tour.kml", "capture-plan.json"),
+        details={
+            "camera_ids": [camera.camera_id for camera in config.cameras]
+            + ([config.ground_truth.camera_id] if config.ground_truth.enabled else []),
+        },
+    )
