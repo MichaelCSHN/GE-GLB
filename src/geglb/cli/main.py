@@ -3,14 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 
-from .blender import build_blender_plan
-from .backends import describe_backends
-from .bev import run_planar_stitcher
-from .combine import combine_datasets
-from .config import load_config
-from .dataset import validate_dataset
-from .planner import build_plan
-from .stitching import build_stitch_jobs
+from ..tasks.underbody_image.workflows.blender import build_blender_plan
+from ..capture.registry import describe_backends
+from ..tasks.underbody_image.compositor import run_planar_stitcher
+from ..workflows.comparison import combine_datasets
+from ..core.config import load_config
+from ..core.dataset import validate_dataset
+from ..tasks.underbody_image.workflows.ge3d import build_plan
+from ..tasks.underbody_image.stitch_plan import build_stitch_jobs
+from ..tasks.registry import describe_tasks
 
 
 def _capture_arguments(parser: argparse.ArgumentParser) -> None:
@@ -26,6 +27,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
+    commands.add_parser("tasks", help="List tasks and their primary product contracts")
     commands.add_parser("backends", help="List capture adapters and their contracts")
 
     legacy = commands.add_parser("plan", help="Alias for 'ge-pro plan'")
@@ -74,6 +76,9 @@ def _print(value: dict[str, object]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "tasks":
+        _print(describe_tasks())
+        return 0
     if args.command == "backends":
         _print(describe_backends())
         return 0

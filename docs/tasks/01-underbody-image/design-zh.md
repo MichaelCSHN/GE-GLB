@@ -1,8 +1,8 @@
-# 任务一：多来源相机序列获取与透明巴士拼接
+# 任务一：车底完整正下视图像
 
 ## 1. 目标与边界
 
-任务一不再等同于“Google Earth 截图”。它由两个相互解耦的子系统构成：
+任务一的原子产品是一张完整正下视图像。它由两个相互解耦的子系统构成：
 
 1. 采集：从 Blender、Google Earth Pro 或未来实车获得同步的前后左右图像序列。
 2. 拼接：只读取标准数据集，完成当前帧环视投影和时序车底补全。
@@ -34,24 +34,20 @@
 ## 3. 模块划分
 
 ```text
-core
-├─ config / route / geo / rig
-├─ model              统一采集模型
-└─ dataset            标准数据集写入、读取和验证
-
-capture backends
-├─ blender            MVP1任务生成
-├─ blender_capture.py Blender内执行渲染
-├─ ge_pro             MVP2 KML Tour
-└─ real_capture       实采接口占位
-
-stitching
-├─ fusion             ti + 历史帧候选策略
-├─ stitching          来源无关的逐帧拼接任务
-└─ 后续：投影、可见性、融合、地面图集
-
-cross source
-└─ combine            MVP3按相机和路线距离配对
+src/geglb/
+├─ core/                         坐标、相机、路径、Dataset、验证
+├─ capture/
+│  ├─ virtual/blender/           Blender平台能力
+│  ├─ virtual/ge3d/              KML与GE 3D平台能力
+│  └─ real/                      实采接口占位
+├─ tasks/underbody_image/
+│  ├─ capture_plan.py            任务一采集模型
+│  ├─ temporal_selection.py      ti与历史候选
+│  ├─ stitch_plan.py             来源无关拼接任务
+│  ├─ compositor.py              平地IPM基线
+│  └─ workflows/                 任务一与各后端组合
+├─ products/                     三类最终产品协议
+└─ workflows/comparison.py       MVP3跨来源配对
 ```
 
 `CaptureBackend` 负责产生标准数据集；`StitchBackend` 只接收标准数据集。实采阶段需要实现时间同步、标定转换和图像导入，但不得修改数据集或拼接接口。

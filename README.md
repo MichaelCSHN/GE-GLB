@@ -1,23 +1,22 @@
 # GE-GLB
 
-Pluggable image acquisition and stitching infrastructure for transparent-vehicle bird's-eye-view
-research. A parameterized bus carries a synchronized front/rear/left/right camera rig. Every image
-source emits the same dataset contract, so stitching does not know whether frames came from
-Blender, Google Earth Pro, or a future real vehicle.
+Pluggable acquisition and product pipelines for vehicle-centered visual research. Virtual capture
+uses Blender or GE 3D; real capture is a vendor-neutral engineering-stage interface.
 
-## Three MVPs
+## Three tasks
 
-| MVP | Source | Purpose | Current implementation |
-| --- | --- | --- | --- |
-| MVP1 | Blender + GLB scene | Deterministic end-to-end algorithm development | Dataset planner and headless Blender runner |
-| MVP2 | Google Earth Pro 3D | Geographic-scene validation | KML Camera Tour and standard dataset planner |
-| MVP3 | MVP1 + MVP2 | Cross-source comparison and joint evaluation | Distance-aligned frame pairing |
+| Task | Acquisition geometry | Primary product |
+| --- | --- | --- |
+| 01 Underbody | Vehicle-mounted front/rear/left/right cameras with temporal frames | One complete nadir underbody image |
+| 02 Roof 360 | Elevated horizontal and downward capture bands | One equirectangular 360 panorama |
+| 03 Drone LookAt | Hemisphere observers targeting the moving vehicle center | One indexed multi-view LookAt image set |
 
-Real capture is represented by a vendor-neutral adapter contract only. It must produce the same
-`ge-glb.dataset/v1` layout before any stitching code can consume it.
+The common interface ends at CaptureDataset. Final products are versioned independently and must
+not be forced into one representation.
 
-See [the Chinese task design and development plan](docs/task-01-plan-zh.md).
-Machine-readable contracts are in [`schemas/`](schemas/).
+Start with [SPEC.md](SPEC.md), [PLAN.md](PLAN.md), and [AGENTS.md](AGENTS.md). Task 01 design and its
+three MVP gates are under [`docs/tasks/01-underbody-image/`](docs/tasks/01-underbody-image/).
+Machine-readable contracts are under [`schemas/`](schemas/).
 
 ## Standard dataset
 
@@ -43,19 +42,20 @@ a stitching job.
 
 ```powershell
 python -m pip install -e ".[stitch]"
+geglb tasks
 geglb backends
 ```
 
 The planning, validation, and pairing tools use Python 3.11+ and the standard library only.
 
-## MVP1: Blender
+## Task 01 MVP1: Blender
 
 Prepare a dataset and render job:
 
 ```powershell
 geglb blender plan `
-  --config examples/mvp.toml `
-  --route examples/route.kml `
+  --config examples/01-underbody-image/mvp.toml `
+  --route examples/01-underbody-image/route.kml `
   --scene D:\blender\assets\scenes\city.glb `
   --out build/mvp1
 ```
@@ -70,12 +70,12 @@ blender --background `
 
 The GLB origin is the first route point; Blender world axes are X east, Y north, Z up, in meters.
 
-## MVP2: Google Earth Pro
+## Task 01 MVP2: Google Earth Pro
 
 ```powershell
 geglb ge-pro plan `
-  --config examples/mvp.toml `
-  --route examples/route.kml `
+  --config examples/01-underbody-image/mvp.toml `
+  --route examples/01-underbody-image/route.kml `
   --out build/mvp2
 ```
 
@@ -97,7 +97,7 @@ rear candidates before geometric visibility testing.
 `stitch run` is a working flat-ground IPM/weighted-blend baseline. It deliberately reports its
 limitations: no terrain model, explicit occlusion test, lens distortion, or exposure compensation.
 
-## MVP3: combine Blender and GE Pro
+## Task 01 MVP3: compare Blender and GE Pro
 
 ```powershell
 geglb combine `

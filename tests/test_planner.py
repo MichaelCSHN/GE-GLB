@@ -6,19 +6,20 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-from geglb.config import load_config
-from geglb.dataset import read_jsonl, validate_dataset
-from geglb.planner import build_plan
-from geglb.route import RoutePoint, load_route_kml, resample_route
-from geglb.rig import camera_to_vehicle_transform
+from geglb.core.config import load_config
+from geglb.core.dataset import read_jsonl, validate_dataset
+from geglb.tasks.underbody_image.workflows.ge3d import build_plan
+from geglb.core.trajectory import RoutePoint, load_route_kml, resample_route
+from geglb.core.camera import camera_to_vehicle_transform
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE = ROOT / "examples" / "01-underbody-image"
 
 
 class RouteTests(unittest.TestCase):
     def test_loads_named_route(self) -> None:
-        points = load_route_kml(ROOT / "examples" / "route.kml", "ROUTE")
+        points = load_route_kml(EXAMPLE / "route.kml", "ROUTE")
         self.assertEqual(len(points), 3)
         self.assertAlmostEqual(points[0].longitude_deg, -5.6587797)
 
@@ -40,9 +41,9 @@ class RouteTests(unittest.TestCase):
 
 class PlannerTests(unittest.TestCase):
     def test_builds_capture_artifacts(self) -> None:
-        config = load_config(ROOT / "examples" / "mvp.toml")
+        config = load_config(EXAMPLE / "mvp.toml")
         with tempfile.TemporaryDirectory() as directory:
-            summary = build_plan(config, ROOT / "examples" / "route.kml", directory)
+            summary = build_plan(config, EXAMPLE / "route.kml", directory)
             output = Path(directory)
             self.assertGreater(summary["poses"], 1)
             self.assertTrue((output / "poses.csv").is_file())

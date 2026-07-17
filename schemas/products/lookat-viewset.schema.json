@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/products/lookat-viewset.schema.json",
+  "title": "GE-GLB Drone LookAt View Set Product v1",
+  "type": "object",
+  "required": ["product_schema", "task_id", "capture_dataset", "primary_artifact", "views"],
+  "properties": {
+    "product_schema": {"const": "ge-glb.product.lookat-viewset/v1"},
+    "task_id": {"const": "task03_drone_lookat"},
+    "capture_dataset": {"type": "string", "minLength": 1},
+    "primary_artifact": {"const": "viewset.json"},
+    "views": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["image", "azimuth_deg", "elevation_deg", "radius_m", "target_ref"]
+      }
+    }
+  },
+  "additionalProperties": true
+}

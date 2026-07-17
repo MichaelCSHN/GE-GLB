@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/capture/capture-plan-v2.schema.json",
+  "title": "GE-GLB Neutral Capture Plan v2",
+  "type": "object",
+  "required": ["schema_version", "task", "coordinate_system", "sensors", "observations"],
+  "properties": {
+    "schema_version": {"const": "ge-glb.capture-plan/v2"},
+    "task": {
+      "type": "object",
+      "required": ["task_id", "product_schema"]
+    },
+    "coordinate_system": {
+      "type": "object",
+      "required": ["world", "vehicle", "camera"]
+    },
+    "sensors": {"type": "array"},
+    "vehicle_trajectory": {"type": ["array", "null"]},
+    "observer_trajectories": {"type": "array"},
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["observation_id", "sample_index", "sensor_id", "observer_pose_id", "output"]
+      }
+    }
+  },
+  "additionalProperties": true
+}

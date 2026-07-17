@@ -7,28 +7,28 @@ import py_compile
 import tempfile
 import unittest
 
-from geglb.blender import build_blender_plan
-from geglb.bev import run_planar_stitcher
-from geglb.combine import combine_datasets
-from geglb.config import load_config
-from geglb.config import CameraConfig
-from geglb.dataset import read_jsonl, validate_dataset
-from geglb.planner import build_plan
-from geglb.stitching import build_stitch_jobs
+from geglb.tasks.underbody_image.workflows.blender import build_blender_plan
+from geglb.tasks.underbody_image.compositor import run_planar_stitcher
+from geglb.workflows.comparison import combine_datasets
+from geglb.core.config import CameraConfig, load_config
+from geglb.core.dataset import read_jsonl, validate_dataset
+from geglb.tasks.underbody_image.workflows.ge3d import build_plan
+from geglb.tasks.underbody_image.stitch_plan import build_stitch_jobs
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE = ROOT / "examples" / "01-underbody-image"
 
 
 class BlenderBackendTests(unittest.TestCase):
     def test_prepares_headless_render_job(self) -> None:
-        config = load_config(ROOT / "examples" / "mvp.toml")
+        config = load_config(EXAMPLE / "mvp.toml")
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "blender"
             summary = build_blender_plan(
                 config,
-                ROOT / "examples" / "route.kml",
-                ROOT / "examples" / "minimal.gltf",
+                EXAMPLE / "route.kml",
+                EXAMPLE / "minimal.gltf",
                 output,
             )
             self.assertEqual(summary["mvp"], "MVP1")
@@ -54,7 +54,7 @@ class BlenderBackendTests(unittest.TestCase):
 
 class CombinedDatasetTests(unittest.TestCase):
     def test_pairs_blender_and_ge_pro_by_camera_and_distance(self) -> None:
-        config = load_config(ROOT / "examples" / "mvp.toml")
+        config = load_config(EXAMPLE / "mvp.toml")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             blender = root / "blender"
@@ -62,11 +62,11 @@ class CombinedDatasetTests(unittest.TestCase):
             combined = root / "combined"
             build_blender_plan(
                 config,
-                ROOT / "examples" / "route.kml",
-                ROOT / "examples" / "minimal.gltf",
+                EXAMPLE / "route.kml",
+                EXAMPLE / "minimal.gltf",
                 blender,
             )
-            build_plan(config, ROOT / "examples" / "route.kml", ge_pro)
+            build_plan(config, EXAMPLE / "route.kml", ge_pro)
             summary = combine_datasets(blender, ge_pro, combined)
             self.assertEqual(summary["mvp"], "MVP3")
             self.assertEqual(summary["unmatched_primary_frames"], 0)
@@ -75,15 +75,15 @@ class CombinedDatasetTests(unittest.TestCase):
             self.assertEqual({pair["camera_id"] for pair in pairs}, {"front", "rear", "left", "right"})
 
     def test_stitch_jobs_do_not_depend_on_capture_source(self) -> None:
-        config = load_config(ROOT / "examples" / "mvp.toml")
+        config = load_config(EXAMPLE / "mvp.toml")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             dataset = root / "dataset"
             output = root / "stitch"
             build_blender_plan(
                 config,
-                ROOT / "examples" / "route.kml",
-                ROOT / "examples" / "minimal.gltf",
+                EXAMPLE / "route.kml",
+                EXAMPLE / "minimal.gltf",
                 dataset,
             )
             summary = build_stitch_jobs(dataset, output)
@@ -99,7 +99,7 @@ class CombinedDatasetTests(unittest.TestCase):
             import numpy as np
         except ImportError:
             self.skipTest("optional stitching dependencies are unavailable")
-        base = load_config(ROOT / "examples" / "mvp.toml")
+        base = load_config(EXAMPLE / "mvp.toml")
         config = replace(
             base,
             cameras=(
@@ -122,8 +122,8 @@ class CombinedDatasetTests(unittest.TestCase):
             output = root / "bev"
             build_blender_plan(
                 config,
-                ROOT / "examples" / "route.kml",
-                ROOT / "examples" / "minimal.gltf",
+                EXAMPLE / "route.kml",
+                EXAMPLE / "minimal.gltf",
                 dataset,
             )
             for frame in read_jsonl(dataset / "frames.jsonl"):

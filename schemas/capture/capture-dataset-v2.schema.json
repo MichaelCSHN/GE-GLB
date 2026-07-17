@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/capture/capture-dataset-v2.schema.json",
+  "title": "GE-GLB Capture Dataset v2 Manifest",
+  "type": "object",
+  "required": ["schema_version", "task", "source", "status", "files"],
+  "properties": {
+    "schema_version": {"const": "ge-glb.capture-dataset/v2"},
+    "task": {"type": "object", "required": ["task_id", "product_schema"]},
+    "source": {
+      "type": "object",
+      "required": ["mode", "backend"],
+      "properties": {
+        "mode": {"enum": ["virtual", "real"]},
+        "backend": {"enum": ["blender", "ge3d", "real"]}
+      }
+    },
+    "status": {"enum": ["planned", "capturing", "complete", "failed"]},
+    "files": {
+      "type": "object",
+      "required": ["rigs", "trajectories", "observations"]
+    }
+  },
+  "additionalProperties": true
+}
