@@ -210,6 +210,7 @@ def write_viewset_product(
         views=tuple(lookup_views),
     )
     product_dict = product.as_dict()
+    product_dict["geglb_version"] = __import__("geglb").__version__
     write_json(product_dir / "viewset.json", product_dict)
     write_json(product_dir / "manifest.json", product_dict)
 

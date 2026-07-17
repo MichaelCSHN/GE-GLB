@@ -303,6 +303,7 @@ def build_panorama(
     # ── product manifest ─────────────────────────────────────────────
     product = Panorama360Product(capture_dataset=str(dataset))
     product_manifest = product.as_dict()
+    product_manifest["geglb_version"] = __import__("geglb").__version__
     product_manifest["stitch_algorithm"] = "equirectangular_spherical_weighted_blend"
     write_json(product_dir / "manifest.json", product_manifest)
 

@@ -240,6 +240,7 @@ def produce_underbody_product(
         capture_dataset=str(dataset),
     )
     manifest = product.as_dict()
+    manifest["geglb_version"] = __import__("geglb").__version__
     manifest["target_frame_index"] = target_frame_index
     manifest["algorithm"] = "flat_ground_ipm_weighted_blend"
     manifest["grid"] = {

@@ -79,6 +79,17 @@ def _parser() -> argparse.ArgumentParser:
     p_underbody.add_argument("--target-frame", type=int, required=True)
     p_underbody.add_argument("--out", required=True)
     p_underbody.add_argument("--meters-per-pixel", type=float, default=0.1)
+
+    validate_product_p = commands.add_parser(
+        "validate-product", help="Validate a product directory"
+    )
+    validate_product_p.add_argument("product_dir")
+    validate_product_p.add_argument(
+        "--type",
+        required=True,
+        dest="product_type",
+        choices=["underbody", "panorama", "lookat"],
+    )
     return parser
 
 
@@ -148,4 +159,10 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
         return 0
+    if args.command == "validate-product":
+        from ..products.validate import validate_product
+
+        report = validate_product(args.product_dir, args.product_type)
+        _print(report)
+        return 0 if report["valid"] else 2
     raise AssertionError(f"unhandled command: {args.command}")
