@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/manifest.schema.json",
+  "title": "GE-GLB Dataset Manifest v1",
+  "type": "object",
+  "required": ["schema_version", "project", "source", "status", "coordinate_system", "counts", "files"],
+  "properties": {
+    "schema_version": {"const": "ge-glb.dataset/v1"},
+    "project": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["kind", "adapter"],
+      "properties": {
+        "kind": {"enum": ["blender", "ge_pro", "real_capture"]},
+        "adapter": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "status": {"enum": ["planned", "capturing", "complete", "failed"]},
+    "coordinate_system": {
+      "type": "object",
+      "required": ["world", "vehicle", "camera", "origin"],
+      "properties": {
+        "world": {"const": "local_enu_m"},
+        "vehicle": {"const": "x_forward_y_left_z_up"},
+        "camera": {"const": "x_right_y_down_z_forward"},
+        "origin": {
+          "type": "object",
+          "required": ["longitude_deg", "latitude_deg", "altitude_m"]
+        }
+      }
+    },
+    "counts": {"type": "object"},
+    "files": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -5,76 +5,19 @@ import json
 from pathlib import Path
 
 from .config import ProjectConfig
-from .fusion import build_fusion_plan
+from .dataset import write_json, write_standard_dataset
 from .kml import build_capture_tour
-from .rig import (
-    camera_calibration,
-    camera_state_for_pose,
-    ground_truth_state_for_pose,
-    intrinsics,
-    state_as_dict,
-)
-from .route import load_route_kml, resample_route
+from .model import CaptureModel, build_capture_model
 
 
-def build_plan(config: ProjectConfig, route_kml: str | Path, output_dir: str | Path) -> dict[str, object]:
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-
-    points = load_route_kml(route_kml, config.route.placemark_name)
-    poses = resample_route(points, config.route.capture_spacing_m)
-
-    ordered_states = []
-    plan_entries: list[dict[str, object]] = []
-    sequence = 0
-    for pose in poses:
-        for camera in config.cameras:
-            state = camera_state_for_pose(pose, camera, config.bus)
-            ordered_states.append((pose, state))
-            plan_entries.append(
-                {
-                    "sequence": sequence,
-                    "pose_index": pose.index,
-                    "distance_m": pose.distance_m,
-                    "camera_id": state.camera_id,
-                    "output": f"images/{state.camera_id}/{pose.index:06d}.png",
-                    "vehicle": {
-                        "longitude_deg": pose.longitude_deg,
-                        "latitude_deg": pose.latitude_deg,
-                        "heading_deg": pose.heading_deg,
-                    },
-                    "camera": state_as_dict(state),
-                }
-            )
-            sequence += 1
-        if config.ground_truth.enabled:
-            state = ground_truth_state_for_pose(pose, config.ground_truth)
-            ordered_states.append((pose, state))
-            plan_entries.append(
-                {
-                    "sequence": sequence,
-                    "pose_index": pose.index,
-                    "distance_m": pose.distance_m,
-                    "camera_id": state.camera_id,
-                    "output": f"images/{state.camera_id}/{pose.index:06d}.png",
-                    "vehicle": {
-                        "longitude_deg": pose.longitude_deg,
-                        "latitude_deg": pose.latitude_deg,
-                        "heading_deg": pose.heading_deg,
-                    },
-                    "camera": state_as_dict(state),
-                    "ground_truth_only": True,
-                }
-            )
-            sequence += 1
-
+def _write_legacy_files(output: Path, config: ProjectConfig, model: CaptureModel) -> None:
     with (output / "poses.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(
             stream,
             fieldnames=["index", "distance_m", "longitude_deg", "latitude_deg", "heading_deg"],
         )
         writer.writeheader()
-        for pose in poses:
+        for pose in model.poses:
             writer.writerow(
                 {
                     "index": pose.index,
@@ -85,59 +28,53 @@ def build_plan(config: ProjectConfig, route_kml: str | Path, output_dir: str | P
                 }
             )
 
-    calibration: dict[str, object] = {
-        "schema_version": 1,
-        "project": config.name,
-        "vehicle_frame": "x_forward_y_left_z_up",
-        "bus": {
-            "length_m": config.bus.length_m,
-            "width_m": config.bus.width_m,
-            "height_m": config.bus.height_m,
-        },
-        "cameras": [camera_calibration(camera, config.bus, config.capture) for camera in config.cameras],
-    }
-    if config.ground_truth.enabled:
-        calibration["ground_truth"] = {
-            "id": config.ground_truth.camera_id,
-            "vehicle_frame": {
-                "x_forward_m": 0.0,
-                "y_left_m": 0.0,
-                "z_up_m": config.ground_truth.height_m,
-            },
-            "orientation": {"tilt_from_nadir_deg": 0.0, "roll_deg": 0.0},
-            "intrinsics": intrinsics(config.ground_truth.horizontal_fov_deg, config.capture),
-            "use_for_reconstruction": False,
-        }
-    (output / "calibration.json").write_text(
-        json.dumps(calibration, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-
+    # Compatibility aliases from the first prototype.
+    write_json(output / "calibration.json", model.calibration)
     plan = {
         "schema_version": 1,
         "project": config.name,
         "route_spacing_m": config.route.capture_spacing_m,
-        "pose_count": len(poses),
-        "capture_count": len(plan_entries),
-        "entries": plan_entries,
+        "pose_count": len(model.poses),
+        "capture_count": len(model.entries),
+        "entries": model.entries,
     }
-    (output / "capture-plan.json").write_text(
-        json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    write_json(output / "capture-plan.json", plan)
 
-    fusion_plan = build_fusion_plan(poses, config.cameras, config.fusion)
-    (output / "fusion-plan.json").write_text(
-        json.dumps(fusion_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
 
-    tour = build_capture_tour(config.name, poses, ordered_states, config.capture)
+def build_plan(
+    config: ProjectConfig,
+    route_kml: str | Path,
+    output_dir: str | Path,
+) -> dict[str, object]:
+    """MVP2: build a GE Pro tour plus the source-independent dataset skeleton."""
+
+    output = Path(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    model = build_capture_model(config, route_kml)
+    write_standard_dataset(
+        output,
+        config,
+        model,
+        source_kind="ge_pro",
+        source_metadata={
+            "adapter": "ge_pro_kml_tour",
+            "capture_method": "earth_pro_save_image",
+        },
+        backend_artifacts=["capture-tour.kml", "capture-plan.json"],
+    )
+    _write_legacy_files(output, config, model)
+
+    tour = build_capture_tour(config.name, model.poses, model.ordered_states, config.capture)
     tour.write(output / "capture-tour.kml", encoding="utf-8", xml_declaration=True)
 
     return {
+        "mvp": "MVP2",
+        "source_kind": "ge_pro",
         "output_dir": str(output.resolve()),
-        "route_points": len(points),
-        "poses": len(poses),
-        "captures": len(plan_entries),
-        "fusion_targets": len(fusion_plan["targets"]),
+        "route_points": len(model.route_points),
+        "poses": len(model.poses),
+        "captures": len(model.entries),
+        "fusion_targets": len(model.fusion_plan["targets"]),
         "camera_ids": [camera.camera_id for camera in config.cameras]
         + ([config.ground_truth.camera_id] if config.ground_truth.enabled else []),
     }

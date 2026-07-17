@@ -15,11 +15,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install package with stitching dependencies
+        run: python -m pip install -e ".[stitch]"
       - name: Run tests
         run: PYTHONPATH=src python -m unittest discover -s tests -v
       - name: Build example artifacts
-        run: >-
-          PYTHONPATH=src python -m geglb plan
-          --config examples/mvp.toml
-          --route examples/route.kml
-          --out build/mvp
+        run: |
+          PYTHONPATH=src python -m geglb ge-pro plan --config examples/mvp.toml --route examples/route.kml --out build/mvp2
+          PYTHONPATH=src python -m geglb blender plan --config examples/mvp.toml --route examples/route.kml --scene examples/minimal.gltf --out build/mvp1
+          PYTHONPATH=src python -m geglb validate build/mvp1
+          PYTHONPATH=src python -m geglb stitch plan --dataset build/mvp1 --out build/stitch-mvp1
+          PYTHONPATH=src python -m geglb combine --primary build/mvp1 --secondary build/mvp2 --out build/mvp3

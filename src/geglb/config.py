@@ -118,6 +118,8 @@ def load_config(path: str | Path) -> ProjectConfig:
         height_m=_positive("ground_truth.height_m", float(gt_raw.get("height_m", 25.0))),
         horizontal_fov_deg=float(gt_raw.get("horizontal_fov_deg", 60.0)),
     )
+    if not 1.0 < ground_truth.horizontal_fov_deg < 179.0:
+        raise ValueError("ground_truth.horizontal_fov_deg must be between 1 and 179 degrees")
 
     route_raw = raw.get("route", {})
     route = RouteConfig(

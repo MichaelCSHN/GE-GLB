@@ -104,10 +104,53 @@ def camera_calibration(
             "tilt_from_nadir_deg": camera.tilt_deg,
             "roll_deg": camera.roll_deg,
         },
+        "camera_to_vehicle": camera_to_vehicle_transform(
+            (forward, left, up),
+            camera.yaw_deg,
+            camera.tilt_deg,
+            camera.roll_deg,
+        ),
         "intrinsics": intrinsics(camera.horizontal_fov_deg, capture),
     }
 
 
+def camera_to_vehicle_transform(
+    position: tuple[float, float, float],
+    yaw_deg: float,
+    tilt_deg: float,
+    roll_deg: float,
+) -> list[list[float]]:
+    """Transform x-right/y-down/z-forward camera coordinates into the vehicle frame."""
+
+    yaw = math.radians(yaw_deg)
+    tilt = math.radians(tilt_deg)
+    roll = math.radians(roll_deg)
+    camera_z = (
+        math.cos(yaw) * math.sin(tilt),
+        -math.sin(yaw) * math.sin(tilt),
+        -math.cos(tilt),
+    )
+    unrolled_x = (-math.sin(yaw), -math.cos(yaw), 0.0)
+    unrolled_y = (
+        camera_z[1] * unrolled_x[2] - camera_z[2] * unrolled_x[1],
+        camera_z[2] * unrolled_x[0] - camera_z[0] * unrolled_x[2],
+        camera_z[0] * unrolled_x[1] - camera_z[1] * unrolled_x[0],
+    )
+    camera_x = tuple(
+        unrolled_x[index] * math.cos(roll) + unrolled_y[index] * math.sin(roll)
+        for index in range(3)
+    )
+    camera_y = tuple(
+        -unrolled_x[index] * math.sin(roll) + unrolled_y[index] * math.cos(roll)
+        for index in range(3)
+    )
+    return [
+        [camera_x[0], camera_y[0], camera_z[0], position[0]],
+        [camera_x[1], camera_y[1], camera_z[1], position[1]],
+        [camera_x[2], camera_y[2], camera_z[2], position[2]],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+
+
 def state_as_dict(state: CameraState) -> dict[str, object]:
     return asdict(state)
-

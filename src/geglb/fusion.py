@@ -39,7 +39,7 @@ def _observation(
     role: str,
     frame_offset: int,
 ) -> dict[str, object]:
-    if role == "current":
+    if frame_offset == 0:
         prior = 1.0
     else:
         prior = _temporal_prior(camera, "past" if frame_offset < 0 else "future")
