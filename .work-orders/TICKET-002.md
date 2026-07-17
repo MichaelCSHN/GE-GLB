@@ -1,7 +1,8 @@
 ---
 id: TICKET-002
 title: "Task 02 Roof 360 — Blender 工作流"
-status: active
+status: closed
+closed: 2026-07-17
 assignee: "DeepSeek"
 created: 2026-07-17
 depends_on: [TICKET-001]
@@ -90,7 +91,17 @@ Task 01 已有参考实现：`src/geglb/tasks/underbody_image/workflows/blender.
 - [ ] test_plan_result_fields — PlanResult 字段完整性
 - [ ] test_rejects_invalid_scene_file — 不存在的 GLB 正确报错
 
-## 验收标准
+## 验收结果
+
+| 标准 | 结果 |
+|------|------|
+| unittest tests.test_roof_360_blender -v | 9/9 通过（要求 6 个） |
+| ruff check | 零错误 |
+| ruff format --check | 3 文件已格式化 |
+| compileall -q | 零错误 |
+| 全量测试 discover -s tests -v | 55/55 通过 |
+| 零新依赖 | ✅ |
+| 禁止修改 core/scripts/specification | ✅ |
 
 - [ ] unittest tests.test_roof_360_blender -v 6/6 通过
 - [ ] ruff check / format --check 零错误

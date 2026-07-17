@@ -35,8 +35,8 @@ before numerical pass/fail thresholds are frozen.
 ## Task 02 — Roof 360 panorama
 
 - [x] Product and capture-band specification boundary.
-- [ ] Define horizontal/downward band defaults and overlap rules.
-- [ ] Generate neutral observations for Blender and GE 3D.
+- [x] Define horizontal/downward band defaults and overlap rules. (spec + default_spec)
+- [x] Generate neutral observations for Blender and GE 3D. (capture_plan + Blender workflow)
 - [ ] Implement spherical projection, seam selection, exposure compensation, and alpha validity.
 - [ ] Add one-panorama product validator and quality metrics.
 - [ ] Reserve real mast-camera synchronization/calibration importer.
