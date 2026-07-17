@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>GE-GLB example authoring file</name>
+    <Placemark>
+      <name>ROUTE</name>
+      <LineString>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+          -5.6587797,36.0573293,0
+          -5.6587390,36.0573680,0
+          -5.6586940,36.0574090,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>

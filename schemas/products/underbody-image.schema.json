@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/products/underbody-image.schema.json",
+  "title": "GE-GLB Underbody Image Product v1",
+  "type": "object",
+  "required": ["product_schema", "task_id", "capture_dataset", "primary_artifact"],
+  "properties": {
+    "product_schema": {"const": "ge-glb.product.underbody-image/v1"},
+    "task_id": {"const": "task01_underbody"},
+    "capture_dataset": {"type": "string", "minLength": 1},
+    "primary_artifact": {"type": "string", "pattern": "\\.(png|tif|tiff|exr)$"},
+    "confidence_artifact": {"type": "string"},
+    "source_map_artifact": {"type": "string"}
+  },
+  "additionalProperties": true
+}

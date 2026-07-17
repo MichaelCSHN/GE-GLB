@@ -1,78 +1,125 @@
 # GE-GLB
 
-Google Earth Pro tooling for transparent-vehicle bird's-eye-view research.
+Pluggable acquisition and product pipelines for vehicle-centered visual research. Virtual capture
+uses Blender or GE 3D; real capture is a vendor-neutral engineering-stage interface.
 
-The first module turns a path drawn with the Earth Pro **Add Path** tool into a deterministic
-multi-camera capture plan for a parameterized bus. A rendered bus model is intentionally not used:
-the bus is represented by dimensions and a rigid camera rig, allowing a hidden nadir camera to
-produce evaluation-only ground truth.
+## Three tasks
 
-## Module 01 status
+| Task | Acquisition geometry | Primary product |
+| --- | --- | --- |
+| 01 Underbody | Vehicle-mounted front/rear/left/right cameras with temporal frames | One complete nadir underbody image |
+| 02 Roof 360 | Elevated horizontal and downward capture bands | One equirectangular 360 panorama |
+| 03 Drone LookAt | Hemisphere observers targeting the moving vehicle center | One indexed multi-view LookAt image set |
 
-Implemented:
+The common interface ends at CaptureDataset. Final products are versioned independently and must
+not be forced into one representation.
 
-- KML `ROUTE` parsing.
-- Distance-based route resampling.
-- Vehicle heading calculation.
-- Parameterized bus and roof-edge camera mounts.
-- Rectilinear camera intrinsics.
-- Four surround cameras plus an evaluation-only nadir camera.
-- Ordered JSON capture manifest.
-- Per-target temporal fusion manifest using all cameras at `t_i` and `t_i-1`.
-- Google Earth Pro KML Capture Tour with `FlyTo`, load wait, and a pause at every view.
+Start with [SPEC.md](SPEC.md), [PLAN.md](PLAN.md), and [AGENTS.md](AGENTS.md). Task 01 design and its
+three MVP gates are under [`docs/tasks/01-underbody-image/`](docs/tasks/01-underbody-image/).
+Machine-readable contracts are under [`schemas/`](schemas/).
 
-Planned next:
-
-- Earth Pro **Save Image** automation.
-- Current-frame inverse perspective mapping and surround-view stitching.
-- World-referenced temporal ground atlas.
-- Causal and offline underbody reconstruction.
-- Camera-count, placement, FOV, and sampling-distance optimization.
-
-See [the module design](docs/module-01-transparent-bus.md) for coordinate conventions and the
-human/program boundary.
-
-## Requirements
-
-- Python 3.11 or newer.
-- Google Earth Pro for opening the generated Capture Tour.
-
-The planner itself uses only the Python standard library.
-
-## Quick start
-
-1. In Google Earth Pro, use **Add Path** to draw a route.
-2. Name the path `ROUTE` and save it as KML.
-3. Generate the capture artifacts:
-
-```powershell
-python -m pip install -e .
-geglb plan --config examples/mvp.toml --route examples/route.kml --out build/mvp
-```
-
-Open `build/mvp/capture-tour.kml` in Earth Pro. Start `CAPTURE_TOUR`; it waits for imagery and
-pauses after every camera view. The ordered intended filenames are in `capture-plan.json`.
-
-Generated files:
+## Standard dataset
 
 ```text
-build/mvp/
-├─ calibration.json
-├─ capture-plan.json
-├─ capture-tour.kml
+dataset/
+├─ manifest.json
+├─ rig.json
+├─ trajectory.jsonl
+├─ frames.jsonl
 ├─ fusion-plan.json
-└─ poses.csv
+└─ images/
+   ├─ front/000000.png
+   ├─ rear/000000.png
+   ├─ left/000000.png
+   └─ right/000000.png
 ```
 
-## Test
+Coordinates are explicit: local ENU world, `x_forward/y_left/z_up` vehicle, and
+`x_right/y_down/z_forward` camera. The hidden nadir camera is evaluation-only and cannot appear in
+a stitching job.
+
+## Install
 
 ```powershell
+python -m pip install -e ".[stitch]"
+geglb tasks
+geglb backends
+```
+
+The planning, validation, and pairing tools use Python 3.11+ and the standard library only.
+
+## Task 01 MVP1: Blender
+
+Prepare a dataset and render job:
+
+```powershell
+geglb blender plan `
+  --config examples/01-underbody-image/mvp.toml `
+  --route examples/01-underbody-image/route.kml `
+  --scene D:\blender\assets\scenes\city.glb `
+  --out build/mvp1
+```
+
+Run the job with Blender's bundled Python:
+
+```powershell
+blender --background `
+  --python scripts/blender_capture.py `
+  -- --job build/mvp1/blender-job.json
+```
+
+The GLB origin is the first route point; Blender world axes are X east, Y north, Z up, in meters.
+
+## Task 01 MVP2: Google Earth Pro
+
+```powershell
+geglb ge-pro plan `
+  --config examples/01-underbody-image/mvp.toml `
+  --route examples/01-underbody-image/route.kml `
+  --out build/mvp2
+```
+
+Open `build/mvp2/capture-tour.kml` in Earth Pro. The tour waits and pauses at every planned view;
+`frames.jsonl` defines the intended image names. Automated Save Image control is the next
+Windows-only slice.
+
+## Source-independent stitching plan
+
+```powershell
+geglb stitch plan --dataset build/mvp1 --out build/stitch-mvp1
+geglb stitch run --dataset build/mvp1 --out build/bev-mvp1 --meters-per-pixel 0.1
+```
+
+Each target uses all surround cameras at `t_i` and `t_i-1`. Frame `t_0` is released after `t_1`
+using future observations. Soft priors favor the previous front view, but never discard side or
+rear candidates before geometric visibility testing.
+
+`stitch run` is a working flat-ground IPM/weighted-blend baseline. It deliberately reports its
+limitations: no terrain model, explicit occlusion test, lens distortion, or exposure compensation.
+
+## Task 01 MVP3: compare Blender and GE Pro
+
+```powershell
+geglb combine `
+  --primary build/mvp1 `
+  --secondary build/mvp2 `
+  --out build/mvp3 `
+  --max-distance-m 0.25
+```
+
+Pairs use camera ID plus nearest route distance and exclude nadir ground truth.
+
+## Validate and test
+
+```powershell
+geglb validate build/mvp1
+geglb validate build/mvp1 --require-images
 $env:PYTHONPATH = "src"
 python -m unittest discover -s tests -v
 ```
 
 ## Research and imagery note
 
-This project is intended for small-scale algorithm prototyping. Google Earth imagery is not a
-physical automotive-sensor simulator, and generated results must retain required attribution and
-comply with the applicable Google Earth terms. Do not use this module as a safety-validation tool.
+Google Earth imagery is not a physical automotive-sensor simulator. Results must retain required
+attribution and comply with applicable Google Earth terms. This repository is not a vehicle safety
+validation system.

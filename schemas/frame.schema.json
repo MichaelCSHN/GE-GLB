@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/frame.schema.json",
+  "title": "GE-GLB Planned Image Frame v1",
+  "type": "object",
+  "required": ["sequence", "frame_index", "distance_m", "camera_id", "image", "status", "ground_truth_only", "camera_world"],
+  "properties": {
+    "sequence": {"type": "integer", "minimum": 0},
+    "frame_index": {"type": "integer", "minimum": 0},
+    "distance_m": {"type": "number", "minimum": 0},
+    "camera_id": {"type": "string", "minLength": 1},
+    "image": {"type": "string", "minLength": 1},
+    "status": {"enum": ["planned", "captured", "missing", "invalid"]},
+    "ground_truth_only": {"type": "boolean"},
+    "camera_world": {
+      "type": "object",
+      "required": ["local_enu_m", "heading_deg", "tilt_from_nadir_deg", "roll_deg", "horizontal_fov_deg"]
+    }
+  },
+  "additionalProperties": true
+}

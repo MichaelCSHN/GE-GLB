@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MichaelCSHN/GE-GLB/schemas/products/panorama-360.schema.json",
+  "title": "GE-GLB 360 Panorama Product v1",
+  "type": "object",
+  "required": ["product_schema", "task_id", "capture_dataset", "primary_artifact", "projection"],
+  "properties": {
+    "product_schema": {"const": "ge-glb.product.panorama-360/v1"},
+    "task_id": {"const": "task02_roof_360"},
+    "capture_dataset": {"type": "string", "minLength": 1},
+    "primary_artifact": {"type": "string", "minLength": 1},
+    "projection": {"const": "equirectangular"}
+  },
+  "additionalProperties": true
+}
